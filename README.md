@@ -1,6 +1,6 @@
 # Sales Forecasting
 
-🛠️ This project forcasts the sales based on past data and utilize the **ARIMAX** model to predict sales for upto 1, 3, and 6 months in the future.<br>
+🛠️ This project leverages past data to forecast sales using the **ARIMAX** model, predicting sales up to 12 months ahead. We validate the predictions with various metrics and visually interpret the actual vs. predicted results.<br>
 <br><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" height="30" alt="python logo"  />
 <img width="12" />
 <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" height="30" alt="html5 logo"  />
@@ -14,14 +14,16 @@
 ## Video Demo
 🎥 Here you can find a video of the working project.
 
-https://github.com/user-attachments/assets/33231804-400a-41a7-b9ec-c128caf25a05
+
+https://github.com/user-attachments/assets/180a4024-4d4a-4bd5-97d3-5939d83bd314
+
 
 ## Deployment
 
 To run this project first clone this repository using:
 
 ```bash
-  git clone https://github.com/aka-Harsh/Satellite-Path-Predictor.git
+  git clone https://github.com/aka-Harsh/Sales-Forecasting.git
 ```
 Locate this repository using terminal and then create a virtual enviroment and activate it:
 
@@ -49,6 +51,5 @@ Open a web browser and go to http://localhost:5000
 ## Project Outlook
 <br>
 
-![Screenshot 2024-10-27 003525](https://github.com/user-attachments/assets/48bd89e9-25a0-4b12-95f5-6edb71e3c79a)
-![Screenshot 2024-10-27 003538](https://github.com/user-attachments/assets/899a08e0-6eb0-4b26-b199-865e99ee203f)
-![Screenshot 2024-10-27 003550](https://github.com/user-attachments/assets/3a7a0227-cee9-47e6-b416-0caf764e1b18)
+![Screenshot 2024-10-27 011128](https://github.com/user-attachments/assets/ea63a29c-72d2-40dc-9d56-795655d3192e)
+![Screenshot 2024-10-27 011137](https://github.com/user-attachments/assets/ebfd1c15-1e2c-4dc4-a7e6-7cfd3de63cb9)
