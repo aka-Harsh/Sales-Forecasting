@@ -1,0 +1,57 @@
+development:
+  debug: true
+  testing: false
+  secret_key: "dev-secret-key-change-in-production"
+  database_url: "sqlite:///app.db"
+  redis_url: "redis://localhost:6379/0"
+  upload_folder: "data/uploads"
+  max_content_length: 16777216  # 16MB
+  allowed_extensions: ["csv", "xlsx", "xls", "json"]
+
+production:
+  debug: false
+  testing: false
+  secret_key: "${SECRET_KEY}"
+  database_url: "${DATABASE_URL}"
+  redis_url: "${REDIS_URL}"
+  upload_folder: "data/uploads"
+  max_content_length: 16777216
+  allowed_extensions: ["csv", "xlsx", "xls", "json"]
+
+testing:
+  debug: false
+  testing: true
+  secret_key: "test-secret-key"
+  database_url: "sqlite:///:memory:"
+  redis_url: "redis://localhost:6379/1"
+  upload_folder: "data/test_uploads"
+  max_content_length: 16777216
+  allowed_extensions: ["csv", "xlsx", "xls", "json"]
+
+models:
+  sarimax:
+    order: [1, 1, 1]
+    seasonal_order: [1, 1, 1, 12]
+    auto_tune: true
+  
+  prophet:
+    growth: "linear"
+    seasonality_mode: "additive"
+    yearly_seasonality: true
+    weekly_seasonality: false
+    daily_seasonality: false
+    
+  lstm:
+    lookback_window: 12
+    units: 50
+    dropout: 0.2
+    epochs: 100
+    batch_size: 32
+    
+  linear:
+    features: ["trend", "seasonal", "lag_features"]
+    n_lags: 12
+    
+  ensemble:
+    weights: "auto"  # or specific weights like [0.3, 0.3, 0.2, 0.2]
+    method: "weighted_average"  # or "stacking"
