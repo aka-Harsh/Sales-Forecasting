@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sales Forecasting Platform{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- KPI Cards Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Current Month Sales -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Current Month Sales</p>
+                <p id="current-sales" class="text-2xl font-bold text-gray-900 dark:text-white">$0</p>
+                <p id="mom-change" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <span class="inline-flex items-center">
+                        <i class="fas fa-arrow-up text-success-500 mr-1"></i>
+                        Loading...
+                    </span>
+                </p>
+            </div>
+            <div class="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                <i class="fas fa-dollar-sign text-primary-600 dark:text-primary-400 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- YoY Growth -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">YoY Growth</p>
+                <p id="yoy-growth" class="text-2xl font-bold text-gray-900 dark:text-white">0%</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">vs last year</p>
+            </div>
+            <div class="p-3 bg-success-100 dark:bg-success-900/30 rounded-lg">
+                <i class="fas fa-chart-line text-success-600 dark:text-success-400 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecast Accuracy -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Forecast Accuracy</p>
+                <p id="forecast-accuracy" class="text-2xl font-bold text-gray-900 dark:text-white">0%</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">last 6 months</p>
+            </div>
+            <div class="p-3 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
+                <i class="fas fa-target text-warning-600 dark:text-warning-400 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trend Direction -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Trend</p>
+                <p id="trend-direction" class="text-2xl font-bold text-gray-900 dark:text-white">Stable</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">recent trend</p>
+            </div>
+            <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <i id="trend-icon" class="fas fa-arrow-right text-purple-600 dark:text-purple-400 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Sales Trend Chart -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sales Trend</h3>
+            <div class="flex space-x-2">
+                <button onclick="changeTimeRange('6M')" class="time-range-btn px-3 py-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">6M</button>
+                <button onclick="changeTimeRange('1Y')" class="time-range-btn px-3 py-1 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors active">1Y</button>
+                <button onclick="changeTimeRange('2Y')" class="time-range-btn px-3 py-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">2Y</button>
+                <button onclick="changeTimeRange('ALL')" class="time-range-btn px-3 py-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">ALL</button>
+            </div>
+        </div>
+        <div class="relative h-80">
+            <canvas id="sales-trend-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- Forecast vs Actual -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Forecast vs Actual</h3>
+            <button onclick="refreshForecast()" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+        </div>
+        <div class="relative h-80">
+            <canvas id="forecast-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Seasonal Patterns -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Seasonal Patterns</h3>
+        <div class="relative h-64">
+            <canvas id="seasonal-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Insights -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Key Insights</h3>
+        <div id="insights-list" class="space-y-4">
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0 w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Ensemble model performing best</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">8.5% MAPE accuracy</p>
+                </div>
+            </div>
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0 w-2 h-2 bg-success-500 rounded-full mt-2"></div>
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Strong seasonal pattern detected</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Peak sales in November-December</p>
+                </div>
+            </div>
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0 w-2 h-2 bg-warning-500 rounded-full mt-2"></div>
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Volatility increased recently</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Consider market factors</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Performance -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Model Performance</h3>
+        <div id="model-performance" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ensemble</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                        <div class="bg-success-500 h-2 rounded-full" style="width: 92%"></div>
+                    </div>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">92%</span>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Prophet</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                        <div class="bg-primary-500 h-2 rounded-full" style="width: 88%"></div>
+                    </div>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">88%</span>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">LSTM</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                        <div class="bg-warning-500 h-2 rounded-full" style="width: 85%"></div>
+                    </div>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">85%</span>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">SARIMAX</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                        <div class="bg-orange-500 h-2 rounded-full" style="width: 82%"></div>
+                    </div>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">82%</span>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Linear</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                        <div class="bg-danger-500 h-2 rounded-full" style="width: 78%"></div>
+                    </div>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">78%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <button onclick="startForecast()" class="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+        <div class="flex items-center justify-center mb-3">
+            <i class="fas fa-crystal-ball text-2xl"></i>
+        </div>
+        <h4 class="font-semibold mb-2">Generate Forecast</h4>
+        <p class="text-sm opacity-90">Create new predictions</p>
+    </button>
+
+    <button onclick="uploadData()" class="bg-gradient-to-r from-success-500 to-success-600 hover:from-success-600 hover:to-success-700 text-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+        <div class="flex items-center justify-center mb-3">
+            <i class="fas fa-upload text-2xl"></i>
+        </div>
+        <h4 class="font-semibold mb-2">Upload Data</h4>
+        <p class="text-sm opacity-90">Import new sales data</p>
+    </button>
+
+    <button onclick="viewAnalytics()" class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+        <div class="flex items-center justify-center mb-3">
+            <i class="fas fa-chart-bar text-2xl"></i>
+        </div>
+        <h4 class="font-semibold mb-2">View Analytics</h4>
+        <p class="text-sm opacity-90">Detailed analysis</p>
+    </button>
+
+    <button onclick="exportData()" class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+        <div class="flex items-center justify-center mb-3">
+            <i class="fas fa-download text-2xl"></i>
+        </div>
+        <h4 class="font-semibold mb-2">Export Results</h4>
+        <p class="text-sm opacity-90">Download forecasts</p>
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Dashboard-specific JavaScript
+let salesTrendChart = null;
+let forecastChart = null;
+let seasonalChart = null;
+
+// Initialize dashboard when page loads
+function initializeDashboard() {
+    loadKPIs();
+    initializeCharts();
+    loadInsights();
+}
+
+// Load KPIs from API
+async function loadKPIs() {
+    try {
+        showLoading();
+        const response = await fetch('/api/analytics/kpis');
+        const data = await response.json();
+        
+        if (data.success) {
+            updateKPIs(data.kpis);
+        } else {
+            showToast('Error loading KPIs: ' + data.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error loading KPIs:', error);
+        showToast('Error loading dashboard data', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// Update KPI cards
+function updateKPIs(kpis) {
+    // Current Sales
+    document.getElementById('current-sales').textContent = kpis.current_month_sales.formatted;
+    
+    // MoM Change
+    const momElement = document.getElementById('mom-change');
+    const momGrowth = kpis.mom_growth;
+    const momIcon = momGrowth.trend === 'up' ? 'fa-arrow-up text-success-500' : 
+                   momGrowth.trend === 'down' ? 'fa-arrow-down text-danger-500' : 
+                   'fa-arrow-right text-gray-500';
+    momElement.innerHTML = `
+        <span class="inline-flex items-center">
+            <i class="fas ${momIcon} mr-1"></i>
+            ${momGrowth.formatted} MoM
+        </span>
+    `;
+    
+    // YoY Growth
+    document.getElementById('yoy-growth').textContent = kpis.yoy_growth.formatted;
+    
+    // Forecast Accuracy
+    document.getElementById('forecast-accuracy').textContent = kpis.forecast_accuracy.formatted;
+    
+    // Trend Direction
+    document.getElementById('trend-direction').textContent = kpis.trend_direction.formatted;
+    const trendIcon = document.getElementById('trend-icon');
+    const trendDirection = kpis.trend_direction.value;
+    
+    if (trendDirection === 'increasing') {
+        trendIcon.className = 'fas fa-arrow-up text-success-600 dark:text-success-400 text-xl';
+    } else if (trendDirection === 'decreasing') {
+        trendIcon.className = 'fas fa-arrow-down text-danger-600 dark:text-danger-400 text-xl';
+    } else {
+        trendIcon.className = 'fas fa-arrow-right text-gray-600 dark:text-gray-400 text-xl';
+    }
+}
+
+// Initialize all charts
+function initializeCharts() {
+    initializeSalesTrendChart();
+    initializeForecastChart();
+    initializeSeasonalChart();
+}
+
+// Initialize sales trend chart
+function initializeSalesTrendChart() {
+    const ctx = document.getElementById('sales-trend-chart').getContext('2d');
+    
+    // Sample data - in production, this would come from API
+    const sampleData = generateSampleSalesData();
+    
+    salesTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sampleData.labels,
+            datasets: [{
+                label: 'Sales',
+                data: sampleData.sales,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                    titleColor: '#f3f4f6',
+                    bodyColor: '#f3f4f6',
+                    borderColor: '#374151',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6b7280'
+                    }
+                },
+                y: {
+                    display: true,
+                    grid: {
+                        color: 'rgba(107, 114, 128, 0.1)'
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+}
+
+// Initialize forecast chart
+function initializeForecastChart() {
+    const ctx = document.getElementById('forecast-chart').getContext('2d');
+    
+    const historicalData = generateSampleSalesData(18); // Last 18 months
+    const forecastData = generateSampleForecastData(6); // Next 6 months
+    
+    forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [...historicalData.labels, ...forecastData.labels],
+            datasets: [
+                {
+                    label: 'Actual Sales',
+                    data: [...historicalData.sales, ...Array(forecastData.labels.length).fill(null)],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Forecast',
+                    data: [...Array(historicalData.labels.length).fill(null), ...forecastData.forecast],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Confidence Interval',
+                    data: [...Array(historicalData.labels.length).fill(null), ...forecastData.upper],
+                    borderColor: 'transparent',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: '+1',
+                    pointRadius: 0
+                },
+                {
+                    label: '',
+                    data: [...Array(historicalData.labels.length).fill(null), ...forecastData.lower],
+                    borderColor: 'transparent',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        filter: function(item) {
+                            return item.text !== '';
+                        },
+                        usePointStyle: true,
+                        color: '#6b7280'
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                    titleColor: '#f3f4f6',
+                    bodyColor: '#f3f4f6'
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6b7280'
+                    }
+                },
+                y: {
+                    display: true,
+                    grid: {
+                        color: 'rgba(107, 114, 128, 0.1)'
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Initialize seasonal chart
+function initializeSeasonalChart() {
+    const ctx = document.getElementById('seasonal-chart').getContext('2d');
+    
+    const monthlyData = [
+        2800, 2600, 2700, 2900, 3100, 3300,
+        3200, 3400, 3600, 3800, 4200, 4500
+    ];
+    
+    seasonalChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Average Monthly Sales',
+                data: monthlyData,
+                backgroundColor: [
+                    '#ef4444', '#f97316', '#f59e0b', '#eab308',
+                    '#84cc16', '#22c55e', '#10b981', '#14b8a6',
+                    '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1'
+                ],
+                borderRadius: 6,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                    titleColor: '#f3f4f6',
+                    bodyColor: '#f3f4f6'
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#6b7280'
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(107, 114, 128, 0.1)'
+                    },
+                    ticks: {
+                        color: '#6b7280',
+                        callback: function(value) {
+                            return '$' + (value / 1000).toFixed(1) + 'K';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Generate sample sales data
+function generateSampleSalesData(months = 24) {
+    const labels = [];
+    const sales = [];
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+    
+    for (let i = 0; i < months; i++) {
+        const date = new Date(startDate);
+        date.setMonth(date.getMonth() + i);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+        
+        // Generate realistic sales data with trend and seasonality
+        const trend = 2000 + (i * 50);
+        const seasonal = 500 * Math.sin((i % 12) * Math.PI / 6);
+        const noise = (Math.random() - 0.5) * 300;
+        sales.push(Math.round(trend + seasonal + noise));
+    }
+    
+    return { labels, sales };
+}
+
+// Generate sample forecast data
+function generateSampleForecastData(months = 6) {
+    const labels = [];
+    const forecast = [];
+    const upper = [];
+    const lower = [];
+    const startDate = new Date();
+    
+    for (let i = 1; i <= months; i++) {
+        const date = new Date(startDate);
+        date.setMonth(date.getMonth() + i);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+        
+        const baseValue = 3500 + (i * 100);
+        const seasonal = 300 * Math.sin((i % 12) * Math.PI / 6);
+        const forecastValue = Math.round(baseValue + seasonal);
+        
+        forecast.push(forecastValue);
+        upper.push(Math.round(forecastValue * 1.15));
+        lower.push(Math.round(forecastValue * 0.85));
+    }
+    
+    return { labels, forecast, upper, lower };
+}
+
+// Load insights
+function loadInsights() {
+    // This would typically come from the analytics API
+    // For now, insights are hardcoded in the template
+}
+
+// Chart interaction functions
+function changeTimeRange(range) {
+    // Remove active class from all buttons
+    document.querySelectorAll('.time-range-btn').forEach(btn => {
+        btn.classList.remove('text-primary-600', 'dark:text-primary-400', 'bg-primary-100', 'dark:bg-primary-900/30');
+        btn.classList.add('text-gray-500', 'dark:text-gray-400');
+    });
+    
+    // Add active class to clicked button
+    event.target.classList.remove('text-gray-500', 'dark:text-gray-400');
+    event.target.classList.add('text-primary-600', 'dark:text-primary-400', 'bg-primary-100', 'dark:bg-primary-900/30');
+    
+    // Update chart data based on range
+    let months;
+    switch(range) {
+        case '6M': months = 6; break;
+        case '1Y': months = 12; break;
+        case '2Y': months = 24; break;
+        default: months = 48; break;
+    }
+    
+    const newData = generateSampleSalesData(months);
+    salesTrendChart.data.labels = newData.labels;
+    salesTrendChart.data.datasets[0].data = newData.sales;
+    salesTrendChart.update();
+    
+    showToast(`Updated chart to show ${range} data`, 'success');
+}
+
+function refreshForecast() {
+    showLoading();
+    
+    // Simulate API call
+    setTimeout(() => {
+        const newForecastData = generateSampleForecastData(6);
+        const historicalData = generateSampleSalesData(18);
+        
+        forecastChart.data.labels = [...historicalData.labels, ...newForecastData.labels];
+        forecastChart.data.datasets[1].data = [...Array(historicalData.labels.length).fill(null), ...newForecastData.forecast];
+        forecastChart.data.datasets[2].data = [...Array(historicalData.labels.length).fill(null), ...newForecastData.upper];
+        forecastChart.data.datasets[3].data = [...Array(historicalData.labels.length).fill(null), ...newForecastData.lower];
+        forecastChart.update();
+        
+        hideLoading();
+        showToast('Forecast updated successfully', 'success');
+    }, 1000);
+}
+
+// Quick action functions
+function startForecast() {
+    window.location.href = '/forecast';
+}
+
+function uploadData() {
+    window.location.href = '/data-management';
+}
+
+function viewAnalytics() {
+    window.location.href = '/analytics';
+}
+
+function exportData() {
+    showToast('Export functionality coming soon', 'info');
+}
+
+// Initialize dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initializeDashboard, 100); // Small delay to ensure DOM is ready
+});
+</script>
+{% endblock %}
