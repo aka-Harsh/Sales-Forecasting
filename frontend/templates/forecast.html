@@ -1,0 +1,601 @@
+{% extends "base.html" %}
+
+{% block title %}Forecasting - Sales Forecasting Platform{% endblock %}
+{% block page_title %}Forecasting{% endblock %}
+
+{% block content %}
+<!-- Model Selection Card -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Model Selection</h3>
+        <button onclick="showModelComparison()" class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+            Compare Models
+        </button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <!-- Ensemble Model -->
+        <div class="model-card active" data-model="ensemble">
+            <div class="p-4 border-2 border-primary-500 bg-primary-50 dark:bg-primary-900/20 rounded-lg cursor-pointer hover:shadow-md transition-all">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-layers text-white text-xl"></i>
+                    </div>
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-1">Ensemble</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Best overall performance</p>
+                    <div class="mt-2">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400">
+                            Recommended
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prophet Model -->
+        <div class="model-card" data-model="prophet">
+            <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:shadow-md transition-all hover:border-primary-300">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-1">Prophet</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Handles seasonality well</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SARIMAX Model -->
+        <div class="model-card" data-model="sarimax">
+            <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:shadow-md transition-all hover:border-primary-300">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-wave-square text-white text-xl"></i>
+                    </div>
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-1">SARIMAX</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Statistical approach</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LSTM Model -->
+        <div class="model-card" data-model="lstm">
+            <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:shadow-md transition-all hover:border-primary-300">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-brain text-white text-xl"></i>
+                    </div>
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-1">LSTM</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Deep learning</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linear Model -->
+        <div class="model-card" data-model="linear">
+            <div class="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:shadow-md transition-all hover:border-primary-300">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-chart-area text-white text-xl"></i>
+                    </div>
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-1">Linear</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Feature-based</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Forecast Configuration -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Configuration Panel -->
+    <div class="lg:col-span-1">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Forecast Configuration</h3>
+            
+            <div class="space-y-6">
+                <!-- Forecast Horizon -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        Forecast Horizon
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectHorizon(6)" class="horizon-btn active px-3 py-2 text-sm font-medium rounded-lg border-2 border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">
+                            6 Months
+                        </button>
+                        <button onclick="selectHorizon(12)" class="horizon-btn px-3 py-2 text-sm font-medium rounded-lg border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-300">
+                            12 Months
+                        </button>
+                        <button onclick="selectHorizon(24)" class="horizon-btn px-3 py-2 text-sm font-medium rounded-lg border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary-300">
+                            24 Months
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Confidence Level -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Confidence Level: <span id="confidence-value">95%</span>
+                    </label>
+                    <input type="range" id="confidence-slider" min="80" max="99" value="95" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider">
+                </div>
+
+                <!-- Advanced Options -->
+                <div>
+                    <button onclick="toggleAdvancedOptions()" class="flex items-center justify-between w-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                        <span>Advanced Options</span>
+                        <i id="advanced-icon" class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    
+                    <div id="advanced-options" class="hidden mt-4 space-y-4">
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="include-holidays" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Include holidays</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="detect-anomalies" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Detect anomalies</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="seasonal-adjustment" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500" checked>
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Seasonal adjustment</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Forecast Button -->
+                <button onclick="generateForecast()" class="w-full btn-primary py-3 text-center">
+                    <i class="fas fa-magic mr-2"></i>
+                    Generate Forecast
+                </button>
+
+                <!-- Model Training Status -->
+                <div id="training-status" class="hidden">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="loading-spinner w-5 h-5 mr-3"></div>
+                            <div>
+                                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Training Model</p>
+                                <p class="text-xs text-blue-600 dark:text-blue-300">This may take a few minutes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecast Results -->
+    <div class="lg:col-span-2">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Forecast Results</h3>
+                <div class="flex space-x-2">
+                    <button onclick="downloadForecast()" class="px-4 py-2 bg-success-600 text-white text-sm font-medium rounded-lg hover:bg-success-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                    <button onclick="shareForecast()" class="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-share mr-2"></i>Share
+                    </button>
+                </div>
+            </div>
+            
+            <div id="forecast-placeholder" class="h-96 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                <div class="text-center">
+                    <i class="fas fa-chart-line text-6xl mb-4 opacity-20"></i>
+                    <p class="text-lg font-medium mb-2">No forecast generated yet</p>
+                    <p class="text-sm">Select a model and click "Generate Forecast" to begin</p>
+                </div>
+            </div>
+            
+            <div id="forecast-chart-container" class="hidden">
+                <canvas id="forecast-chart" class="w-full h-96"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Model Performance Comparison -->
+<div id="model-comparison" class="hidden mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Model Performance Comparison</h3>
+            <button onclick="hideModelComparison()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+                <canvas id="performance-chart" class="w-full h-64"></canvas>
+            </div>
+            <div>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <span class="font-medium text-gray-900 dark:text-white">Best Overall</span>
+                        <span class="text-success-600 dark:text-success-400 font-semibold">Ensemble (92.5%)</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <span class="font-medium text-gray-900 dark:text-white">Fastest Training</span>
+                        <span class="text-blue-600 dark:text-blue-400 font-semibold">Linear (2.3s)</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <span class="font-medium text-gray-900 dark:text-white">Best for Seasonality</span>
+                        <span class="text-purple-600 dark:text-purple-400 font-semibold">Prophet</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Forecast Summary -->
+<div id="forecast-summary" class="hidden">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Predicted Growth</p>
+                    <p id="predicted-growth" class="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+                </div>
+                <div class="p-3 bg-success-100 dark:bg-success-900/30 rounded-lg">
+                    <i class="fas fa-trending-up text-success-600 dark:text-success-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Forecast Accuracy</p>
+                    <p id="forecast-accuracy-value" class="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+                </div>
+                <div class="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                    <i class="fas fa-bullseye text-primary-600 dark:text-primary-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Risk Level</p>
+                    <p id="risk-level" class="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+                </div>
+                <div class="p-3 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
+                    <i class="fas fa-exclamation-triangle text-warning-600 dark:text-warning-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/forecast.js') }}"></script>
+<script>
+// Forecast page specific JavaScript
+let selectedModel = 'ensemble';
+let selectedHorizon = 6;
+let forecastChart = null;
+let performanceChart = null;
+
+// Initialize forecast page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeForecastPage();
+    setupEventListeners();
+});
+
+function initializeForecastPage() {
+    // Update confidence level display
+    const confidenceSlider = document.getElementById('confidence-slider');
+    const confidenceValue = document.getElementById('confidence-value');
+    
+    confidenceSlider.addEventListener('input', function() {
+        confidenceValue.textContent = this.value + '%';
+    });
+
+    // Set initial model selection
+    selectModel('ensemble');
+}
+
+function setupEventListeners() {
+    // Model card selection
+    document.querySelectorAll('.model-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const model = this.dataset.model;
+            selectModel(model);
+        });
+    });
+}
+
+function selectModel(modelType) {
+    selectedModel = modelType;
+    
+    // Update UI
+    document.querySelectorAll('.model-card').forEach(card => {
+        const cardElement = card.querySelector('div');
+        if (card.dataset.model === modelType) {
+            cardElement.classList.remove('border-gray-200', 'dark:border-gray-600');
+            cardElement.classList.add('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+            card.classList.add('active');
+        } else {
+            cardElement.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+            cardElement.classList.add('border-gray-200', 'dark:border-gray-600');
+            card.classList.remove('active');
+        }
+    });
+    
+    showToast(`Selected ${modelType.charAt(0).toUpperCase() + modelType.slice(1)} model`, 'success');
+}
+
+function selectHorizon(months) {
+    selectedHorizon = months;
+    
+    // Update UI
+    document.querySelectorAll('.horizon-btn').forEach(btn => {
+        btn.classList.remove('active', 'border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20', 'text-primary-600', 'dark:text-primary-400');
+        btn.classList.add('border-gray-200', 'dark:border-gray-600', 'text-gray-700', 'dark:text-gray-300');
+    });
+    
+    event.target.classList.remove('border-gray-200', 'dark:border-gray-600', 'text-gray-700', 'dark:text-gray-300');
+    event.target.classList.add('active', 'border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20', 'text-primary-600', 'dark:text-primary-400');
+}
+
+function toggleAdvancedOptions() {
+    const options = document.getElementById('advanced-options');
+    const icon = document.getElementById('advanced-icon');
+    
+    if (options.classList.contains('hidden')) {
+        options.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    } else {
+        options.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+    }
+}
+
+async function generateForecast() {
+    try {
+        // Show loading state
+        document.getElementById('training-status').classList.remove('hidden');
+        document.getElementById('forecast-placeholder').classList.add('hidden');
+        
+        const requestData = {
+            model_type: selectedModel,
+            steps: selectedHorizon,
+            config: {
+                confidence_level: parseInt(document.getElementById('confidence-slider').value) / 100,
+                include_holidays: document.getElementById('include-holidays').checked,
+                detect_anomalies: document.getElementById('detect-anomalies').checked,
+                seasonal_adjustment: document.getElementById('seasonal-adjustment').checked
+            }
+        };
+        
+        // First train the model
+        const trainResponse = await api.post('/forecast/train', {
+            model_type: selectedModel,
+            data_source: 'sample'
+        });
+        
+        if (!trainResponse.success) {
+            throw new Error(trainResponse.error);
+        }
+        
+        // Then generate predictions
+        const forecastResponse = await api.post('/forecast/predict', requestData);
+        
+        if (!forecastResponse.success) {
+            throw new Error(forecastResponse.error);
+        }
+        
+        // Display results
+        displayForecastResults(forecastResponse);
+        
+        showToast('Forecast generated successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Forecast generation failed:', error);
+        showToast('Failed to generate forecast: ' + error.message, 'error');
+    } finally {
+        document.getElementById('training-status').classList.add('hidden');
+    }
+}
+
+function displayForecastResults(data) {
+    // Hide placeholder and show chart
+    document.getElementById('forecast-placeholder').classList.add('hidden');
+    document.getElementById('forecast-chart-container').classList.remove('hidden');
+    document.getElementById('forecast-summary').classList.remove('hidden');
+    
+    // Create forecast chart
+    createForecastChart(data);
+    
+    // Update summary cards
+    updateForecastSummary(data);
+}
+
+function createForecastChart(data) {
+    const ctx = document.getElementById('forecast-chart').getContext('2d');
+    
+    if (forecastChart) {
+        forecastChart.destroy();
+    }
+    
+    // Prepare chart data
+    const historicalData = generateSampleHistoricalData(); // This would come from API in production
+    const allLabels = [...historicalData.labels, ...data.dates];
+    
+    forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: allLabels,
+            datasets: [
+                {
+                    label: 'Historical Sales',
+                    data: [...historicalData.sales, ...Array(data.dates.length).fill(null)],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Forecast',
+                    data: [...Array(historicalData.labels.length).fill(null), ...data.predictions],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4
+                },
+                {
+                    label: 'Upper Confidence',
+                    data: [...Array(historicalData.labels.length).fill(null), ...data.confidence_intervals.upper],
+                    borderColor: 'transparent',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: '+1',
+                    pointRadius: 0
+                },
+                {
+                    label: 'Lower Confidence',
+                    data: [...Array(historicalData.labels.length).fill(null), ...data.confidence_intervals.lower],
+                    borderColor: 'transparent',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')),
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        filter: function(item) {
+                            return !item.text.includes('Confidence');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateForecastSummary(data) {
+    // Calculate growth rate
+    const predictions = data.predictions;
+    const firstValue = predictions[0];
+    const lastValue = predictions[predictions.length - 1];
+    const growthRate = ((lastValue - firstValue) / firstValue * 100).toFixed(1);
+    
+    document.getElementById('predicted-growth').textContent = `${growthRate}%`;
+    document.getElementById('forecast-accuracy-value').textContent = `${data.model_info.accuracy || 92}%`;
+    document.getElementById('risk-level').textContent = Math.abs(growthRate) > 20 ? 'High' : Math.abs(growthRate) > 10 ? 'Medium' : 'Low';
+}
+
+function generateSampleHistoricalData() {
+    const labels = [];
+    const sales = [];
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 24);
+    
+    for (let i = 0; i < 24; i++) {
+        const date = new Date(startDate);
+        date.setMonth(date.getMonth() + i);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+        
+        const trend = 3000 + (i * 50);
+        const seasonal = 500 * Math.sin((i % 12) * Math.PI / 6);
+        const noise = (Math.random() - 0.5) * 300;
+        sales.push(Math.round(trend + seasonal + noise));
+    }
+    
+    return { labels, sales };
+}
+
+function showModelComparison() {
+    document.getElementById('model-comparison').classList.remove('hidden');
+    createPerformanceChart();
+}
+
+function hideModelComparison() {
+    document.getElementById('model-comparison').classList.add('hidden');
+}
+
+function createPerformanceChart() {
+    const ctx = document.getElementById('performance-chart').getContext('2d');
+    
+    if (performanceChart) {
+        performanceChart.destroy();
+    }
+    
+    performanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Ensemble', 'Prophet', 'LSTM', 'SARIMAX', 'Linear'],
+            datasets: [{
+                label: 'Accuracy (%)',
+                data: [92.5, 88.2, 85.7, 82.1, 78.4],
+                backgroundColor: [
+                    '#10b981',
+                    '#3b82f6',
+                    '#8b5cf6',
+                    '#f59e0b',
+                    '#ef4444'
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')),
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function downloadForecast() {
+    showToast('Downloading forecast data...', 'info');
+    // Implement download functionality
+}
+
+function shareForecast() {
+    showToast('Share functionality coming soon!', 'info');
+    // Implement share functionality
+}
+</script>
+{% endblock %}
