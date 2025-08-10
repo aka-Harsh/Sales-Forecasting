@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Sales Forecasting Platform</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .form-select {
+            @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white;
+        }
+        .btn-primary {
+            @apply px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors;
+        }
+        .btn-secondary {
+            @apply px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors;
+        }
+        .trend-view-btn {
+            @apply px-3 py-1 text-sm font-medium rounded-md transition-colors cursor-pointer;
+        }
+        .trend-view-btn.active {
+            @apply text-blue-600 bg-blue-100 dark:bg-blue-900/30;
+        }
+        .trend-view-btn:not(.active) {
+            @apply text-gray-500 hover:text-blue-600;
+        }
+        .text-primary-600 { color: #2563eb; }
+        .text-success-600 { color: #059669; }
+        .text-success-400 { color: #34d399; }
+        .bg-primary-100 { background-color: #dbeafe; }
+        .dark .dark\:bg-primary-900\/30 { background-color: rgba(30, 58, 138, 0.3); }
+        .dark .dark\:text-primary-400 { color: #60a5fa; }
+        .dark .dark\:text-success-400 { color: #34d399; }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            600: '#2563eb',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h1>
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Analytics Filter Bar -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time Period</label>
+                            <select id="time-period" class="form-select w-40">
+                                <option value="6M">Last 6 Months</option>
+                                <option value="1Y" selected>Last Year</option>
+                                <option value="2Y">Last 2 Years</option>
+                                <option value="ALL">All Time</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Analysis Type</label>
+                            <select id="analysis-type" class="form-select w-48">
+                                <option value="comprehensive">Comprehensive</option>
+                                <option value="seasonal">Seasonal Analysis</option>
+                                <option value="trend">Trend Analysis</option>
+                                <option value="anomalies">Anomaly Detection</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button onclick="refreshAnalytics()" class="btn-primary">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                        <button onclick="exportAnalytics()" class="btn-secondary">
+                            <i class="fas fa-download mr-2"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Insights Banner -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6 mb-8">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-lightbulb text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Key Insights</h3>
+                        <div id="key-insights" class="space-y-2">
+                            <p class="text-blue-800 dark:text-blue-200">• Strong seasonal pattern detected with 15% peak in Q4</p>
+                            <p class="text-blue-800 dark:text-blue-200">• Overall upward trend of 8.5% year-over-year growth</p>
+                            <p class="text-blue-800 dark:text-blue-200">• 3 anomalies detected in the last 12 months</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Trend Analysis Chart -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Trend Analysis</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="changeTrendView('linear')" class="trend-view-btn active">Linear</button>
+                            <button onclick="changeTrendView('polynomial')" class="trend-view-btn">Polynomial</button>
+                        </div>
+                    </div>
+                    <div class="relative h-80">
+                        <canvas id="trend-analysis-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Seasonal Decomposition -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Seasonal Decomposition</h3>
+                        <select id="decomposition-type" class="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="additive">Additive</option>
+                            <option value="multiplicative">Multiplicative</option>
+                        </select>
+                    </div>
+                    <div class="relative h-80">
+                        <canvas id="seasonal-decomposition-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Analytics Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <!-- Correlation Matrix -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Feature Correlations</h3>
+                    <div id="correlation-heatmap" class="relative h-64">
+                        <canvas id="correlation-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Statistical Summary -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Statistical Summary</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Mean</span>
+                            <span id="stat-mean" class="text-sm font-semibold text-gray-900 dark:text-white">$3,245</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Median</span>
+                            <span id="stat-median" class="text-sm font-semibold text-gray-900 dark:text-white">$3,180</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Std Deviation</span>
+                            <span id="stat-std" class="text-sm font-semibold text-gray-900 dark:text-white">$487</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Skewness</span>
+                            <span id="stat-skewness" class="text-sm font-semibold text-gray-900 dark:text-white">0.23</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Kurtosis</span>
+                            <span id="stat-kurtosis" class="text-sm font-semibold text-gray-900 dark:text-white">-0.45</span>
+                        </div>
+                        <hr class="border-gray-200 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Seasonality Strength</span>
+                            <span id="seasonality-strength" class="text-sm font-semibold text-green-600 dark:text-green-400">Strong</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Trend Strength</span>
+                            <span id="trend-strength" class="text-sm font-semibold text-blue-600 dark:text-blue-400">Moderate</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forecast Accuracy -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Model Performance</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ensemble</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 92%"></div>
+                                </div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-10">92%</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Prophet</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: 88%"></div>
+                                </div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-10">88%</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">LSTM</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                    <div class="bg-purple-500 h-2 rounded-full" style="width: 85%"></div>
+                                </div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-10">85%</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">SARIMAX</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 82%"></div>
+                                </div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-10">82%</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Linear</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                    <div class="bg-red-500 h-2 rounded-full" style="width: 78%"></div>
+                                </div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400 w-10">78%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anomaly Detection Results -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Anomaly Detection</h3>
+                    <div class="flex space-x-2">
+                        <select id="anomaly-method" class="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="comprehensive">Comprehensive</option>
+                            <option value="statistical">Statistical</option>
+                            <option value="isolation_forest">Isolation Forest</option>
+                            <option value="seasonal">Seasonal</option>
+                        </select>
+                        <button onclick="detectAnomalies()" class="px-3 py-1 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700">
+                            Detect
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <div class="relative h-64">
+                            <canvas id="anomaly-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-4">Detected Anomalies</h4>
+                        <div id="anomaly-list" class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-red-800 dark:text-red-200">March 2024</p>
+                                    <p class="text-xs text-red-600 dark:text-red-300">Unusual spike (+45%)</p>
+                                </div>
+                                <span class="text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded">High</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">June 2024</p>
+                                    <p class="text-xs text-yellow-600 dark:text-yellow-300">Below expected (-18%)</p>
+                                </div>
+                                <span class="text-xs text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded">Medium</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-medium text-orange-800 dark:text-orange-200">September 2024</p>
+                                    <p class="text-xs text-orange-600 dark:text-orange-300">Seasonal deviation</p>
+                                </div>
+                                <span class="text-xs text-orange-600 bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded">Low</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Analytics -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Scenario Analysis -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Scenario Analysis</h3>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Scenario Type</label>
+                            <select id="scenario-type" class="form-select">
+                                <option value="growth_rate">Growth Rate Change</option>
+                                <option value="seasonal_adjustment">Seasonal Adjustment</option>
+                                <option value="trend_change">Trend Change</option>
+                            </select>
+                        </div>
+                        
+                        <div id="scenario-controls">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Growth Rate Adjustment: <span id="growth-value">0%</span>
+                            </label>
+                            <input type="range" id="growth-slider" min="-50" max="50" value="0" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        
+                        <button onclick="runScenarioAnalysis()" class="w-full btn-primary">
+                            Run Scenario Analysis
+                        </button>
+                    </div>
+                    
+                    <div id="scenario-results" class="hidden">
+                        <div class="relative h-48">
+                            <canvas id="scenario-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forecast Accuracy Tracking -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Forecast vs Actual</h3>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Overall Accuracy</span>
+                            <span class="text-lg font-bold text-green-600 dark:text-green-400">89.2%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Mean Absolute Error</span>
+                            <span class="text-lg font-bold text-gray-900 dark:text-white">$287</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Directional Accuracy</span>
+                            <span class="text-lg font-bold text-blue-600 dark:text-blue-400">84.5%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="relative h-48">
+                        <canvas id="accuracy-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span class="text-gray-700 dark:text-gray-300">Loading analytics...</span>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-sm">
+            <div class="flex items-center space-x-3">
+                <div id="toast-icon" class="flex-shrink-0"></div>
+                <div id="toast-message" class="text-sm text-gray-700 dark:text-gray-300"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let trendChart = null;
+        let seasonalChart = null;
+        let correlationChart = null;
+        let anomalyChart = null;
+        let scenarioChart = null;
+        let accuracyChart = null;
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMessage = document.getElementById('toast-message');
+            
+            // Set icon based on type
+            const icons = {
+                success: '<i class="fas fa-check-circle text-green-500"></i>',
+                error: '<i class="fas fa-exclamation-circle text-red-500"></i>',
+                warning: '<i class="fas fa-exclamation-triangle text-yellow-500"></i>',
+                info: '<i class="fas fa-info-circle text-blue-500"></i>'
+            };
+            
+            toastIcon.innerHTML = icons[type] || icons.info;
+            toastMessage.textContent = message;
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            // Reinitialize charts with new theme
+            setTimeout(() => {
+                initializeCharts();
+            }, 100);
+        }
+
+        // Chart utilities
+        const ChartUtils = {
+            getDefaultOptions(isDark) {
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: isDark ? '#e5e7eb' : '#374151'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: isDark ? '#9ca3af' : '#6b7280'
+                            },
+                            grid: {
+                                color: isDark ? '#374151' : '#e5e7eb'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: isDark ? '#9ca3af' : '#6b7280'
+                            },
+                            grid: {
+                                color: isDark ? '#374151' : '#e5e7eb'
+                            }
+                        }
+                    }
+                };
+            }
+        };
+
+        // Initialize analytics page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnalyticsPage();
+            loadAnalyticsData();
+        });
+
+        function initializeAnalyticsPage() {
+            // Setup event listeners
+            document.getElementById('time-period').addEventListener('change', handleTimePeriodChange);
+            document.getElementById('analysis-type').addEventListener('change', handleAnalysisTypeChange);
+            document.getElementById('decomposition-type').addEventListener('change', handleDecompositionChange);
+            document.getElementById('anomaly-method').addEventListener('change', updateAnomalyMethod);
+            document.getElementById('scenario-type').addEventListener('change', handleScenarioTypeChange);
+            
+            // Growth slider
+            const growthSlider = document.getElementById('growth-slider');
+            const growthValue = document.getElementById('growth-value');
+            growthSlider.addEventListener('input', function() {
+                growthValue.textContent = this.value + '%';
+            });
+            
+            // Initialize charts
+            initializeCharts();
+        }
+
+        async function loadAnalyticsData() {
+            try {
+                showLoading();
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Update charts with sample data
+                updateTrendAnalysis();
+                updateCorrelations();
+                await detectAnomalies();
+                
+                showToast('Analytics data loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error loading analytics data:', error);
+                showToast('Error loading analytics data', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function initializeCharts() {
+            // Destroy existing charts
+            [trendChart, seasonalChart, correlationChart, anomalyChart, accuracyChart, scenarioChart].forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            
+            // Initialize all charts with sample data
+            createTrendAnalysisChart();
+            createSeasonalDecompositionChart();
+            createCorrelationChart();
+            createAnomalyChart();
+            createAccuracyChart();
+        }
+
+        function createTrendAnalysisChart() {
+            const ctx = document.getElementById('trend-analysis-chart').getContext('2d');
+            
+            // Generate sample trend data
+            const data = generateSampleTrendData();
+            
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Actual Sales',
+                            data: data.actual,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Trend Line',
+                            data: data.trend,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0
+                        }
+                    ]
+                },
+                options: {
+                    ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')),
+                    scales: {
+                        ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales,
+                        y: {
+                            ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y,
+                            ticks: {
+                                ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y.ticks,
+                                callback: function(value) {
+                                    return ' + value.toLocaleString()';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createSeasonalDecompositionChart() {
+            const ctx = document.getElementById('seasonal-decomposition-chart').getContext('2d');
+            
+            const data = generateSeasonalData();
+            
+            seasonalChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Observed',
+                            data: data.observed,
+                            borderColor: '#10b981',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: 'Trend',
+                            data: data.trend,
+                            borderColor: '#f59e0b',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: 'Seasonal',
+                            data: data.seasonal,
+                            borderColor: '#8b5cf6',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark'))
+            });
+        }
+
+        function createCorrelationChart() {
+            const ctx = document.getElementById('correlation-chart').getContext('2d');
+            
+            correlationChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Lag 1', 'Lag 3', 'Seasonal', 'Trend', 'Rolling Avg'],
+                    datasets: [{
+                        label: 'Correlation with Sales',
+                        data: [0.85, 0.72, 0.68, 0.91, 0.78],
+                        backgroundColor: [
+                            '#10b981',
+                            '#3b82f6',
+                            '#8b5cf6',
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')),
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales,
+                        y: {
+                            ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y,
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y.ticks,
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAnomalyChart() {
+            const ctx = document.getElementById('anomaly-chart').getContext('2d');
+            
+            const data = generateAnomalyData();
+            
+            anomalyChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Normal Data',
+                            data: data.normal,
+                            backgroundColor: '#3b82f6',
+                            borderColor: '#3b82f6',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Anomalies',
+                            data: data.anomalies,
+                            backgroundColor: '#ef4444',
+                            borderColor: '#ef4444',
+                            pointRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')),
+                    scales: {
+                        ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales,
+                        y: {
+                            ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y,
+                            ticks: {
+                                ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y.ticks,
+                                callback: function(value) {
+                                    return ' + value.toLocaleString()';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAccuracyChart() {
+            const ctx = document.getElementById('accuracy-chart').getContext('2d');
+            
+            const data = generateAccuracyData();
+            
+            accuracyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Forecast Accuracy',
+                            data: data.accuracy,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')),
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales,
+                        y: {
+                            ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y,
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y.ticks,
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event handlers
+        function handleTimePeriodChange() {
+            showToast('Updating time period...', 'info');
+            loadAnalyticsData();
+        }
+
+        function handleAnalysisTypeChange() {
+            const analysisType = document.getElementById('analysis-type').value;
+            showToast(`Switching to ${analysisType} analysis...`, 'info');
+            loadAnalyticsData();
+        }
+
+        function handleDecompositionChange() {
+            const decompositionType = document.getElementById('decomposition-type').value;
+            showToast(`Updating decomposition to ${decompositionType}...`, 'info');
+            // Update seasonal decomposition chart
+            createSeasonalDecompositionChart();
+        }
+
+        function handleScenarioTypeChange() {
+            const scenarioType = document.getElementById('scenario-type').value;
+            updateScenarioControls(scenarioType);
+        }
+
+        function updateScenarioControls(scenarioType) {
+            const controls = document.getElementById('scenario-controls');
+            
+            if (scenarioType === 'growth_rate') {
+                controls.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Growth Rate Adjustment: <span id="growth-value">0%</span>
+                    </label>
+                    <input type="range" id="growth-slider" min="-50" max="50" value="0" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                `;
+            } else if (scenarioType === 'seasonal_adjustment') {
+                controls.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Seasonal Boost: <span id="seasonal-value">0%</span>
+                    </label>
+                    <input type="range" id="seasonal-slider" min="-30" max="30" value="0" 
+                           class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                `;
+            } else if (scenarioType === 'trend_change') {
+                controls.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Trend Change: <span id="trend-value">0%</span>
+                    </label>
+                    <input type="range" id="trend-slider" min="-40" max="40" value="0" 
+                           class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer">
+                `;
+            }
+            
+            // Re-attach event listeners
+            const slider = controls.querySelector('input[type="range"]');
+            const valueSpan = controls.querySelector('span');
+            if (slider && valueSpan) {
+                slider.addEventListener('input', function() {
+                    valueSpan.textContent = this.value + '%';
+                });
+            }
+        }
+
+        function changeTrendView(viewType) {
+            // Update active button
+            document.querySelectorAll('.trend-view-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-blue-600', 'bg-blue-100', 'dark:bg-blue-900/30');
+                btn.classList.add('text-gray-500');
+            });
+            
+            event.target.classList.remove('text-gray-500');
+            event.target.classList.add('active', 'text-blue-600', 'bg-blue-100', 'dark:bg-blue-900/30');
+            
+            // Update chart based on view type
+            if (trendChart) {
+                if (viewType === 'polynomial') {
+                    const polynomialData = generatePolynomialTrendData();
+                    trendChart.data.datasets[1].data = polynomialData;
+                } else {
+                    const linearData = generateLinearTrendData();
+                    trendChart.data.datasets[1].data = linearData;
+                }
+                trendChart.update();
+            }
+        }
+
+        async function detectAnomalies() {
+            try {
+                const method = document.getElementById('anomaly-method').value;
+                showToast('Detecting anomalies...', 'info');
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Update anomaly chart
+                createAnomalyChart();
+                
+                showToast('Anomalies detected successfully', 'success');
+            } catch (error) {
+                console.error('Error detecting anomalies:', error);
+                showToast('Error detecting anomalies', 'error');
+            }
+        }
+
+        async function runScenarioAnalysis() {
+            try {
+                const scenarioType = document.getElementById('scenario-type').value;
+                showToast('Running scenario analysis...', 'info');
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Show results
+                const resultsDiv = document.getElementById('scenario-results');
+                resultsDiv.classList.remove('hidden');
+                
+                // Create scenario chart
+                createScenarioChart();
+                
+                showToast('Scenario analysis completed', 'success');
+            } catch (error) {
+                console.error('Error running scenario analysis:', error);
+                showToast('Error running scenario analysis', 'error');
+            }
+        }
+
+        function createScenarioChart() {
+            const ctx = document.getElementById('scenario-chart').getContext('2d');
+            
+            if (scenarioChart) {
+                scenarioChart.destroy();
+            }
+            
+            const data = generateScenarioData();
+            
+            scenarioChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Base Forecast',
+                            data: data.base,
+                            borderColor: '#6b7280',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5]
+                        },
+                        {
+                            label: 'Scenario Forecast',
+                            data: data.scenario,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')),
+                    scales: {
+                        ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales,
+                        y: {
+                            ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y,
+                            ticks: {
+                                ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')).scales.y.ticks,
+                                callback: function(value) {
+                                    return ' + value.toLocaleString()';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function refreshAnalytics() {
+            showToast('Refreshing analytics...', 'info');
+            await loadAnalyticsData();
+        }
+
+        function exportAnalytics() {
+            showToast('Exporting analytics report...', 'info');
+            // Simulate export
+            setTimeout(() => {
+                showToast('Analytics report exported successfully', 'success');
+            }, 1000);
+        }
+
+        function updateAnomalyMethod() {
+            detectAnomalies();
+        }
+
+        function updateTrendAnalysis() {
+            // Update with new data
+            createTrendAnalysisChart();
+        }
+
+        function updateCorrelations() {
+            // Update correlation chart
+            createCorrelationChart();
+        }
+
+        // Sample data generators
+        function generateSampleTrendData() {
+            const labels = [];
+            const actual = [];
+            const trend = [];
+            
+            for (let i = 0; i < 24; i++) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - 24 + i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+                
+                const trendValue = 2500 + (i * 75);
+                const seasonal = 400 * Math.sin((i % 12) * Math.PI / 6);
+                const noise = (Math.random() - 0.5) * 200;
+                
+                actual.push(Math.round(trendValue + seasonal + noise));
+                trend.push(trendValue);
+            }
+            
+            return { labels, actual, trend };
+        }
+
+        function generateLinearTrendData() {
+            const data = [];
+            for (let i = 0; i < 24; i++) {
+                data.push(2500 + (i * 75));
+            }
+            return data;
+        }
+
+        function generatePolynomialTrendData() {
+            const data = [];
+            for (let i = 0; i < 24; i++) {
+                data.push(2500 + (i * 75) + (i * i * 2));
+            }
+            return data;
+        }
+
+        function generateSeasonalData() {
+            const labels = [];
+            const observed = [];
+            const trend = [];
+            const seasonal = [];
+            
+            for (let i = 0; i < 24; i++) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - 24 + i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short' }));
+                
+                const trendValue = 2500 + (i * 50);
+                const seasonalValue = 400 * Math.sin((i % 12) * Math.PI / 6);
+                
+                observed.push(trendValue + seasonalValue + (Math.random() - 0.5) * 100);
+                trend.push(trendValue);
+                seasonal.push(seasonalValue);
+            }
+            
+            return { labels, observed, trend, seasonal };
+        }
+
+        function generateAnomalyData() {
+            const normal = [];
+            const anomalies = [];
+            
+            for (let i = 0; i < 100; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - 100 + i);
+                const value = 3000 + (Math.random() - 0.5) * 500;
+                
+                if (Math.random() < 0.05) { // 5% anomalies
+                    anomalies.push({
+                        x: date.getTime(),
+                        y: value + (Math.random() > 0.5 ? 1000 : -1000)
+                    });
+                } else {
+                    normal.push({
+                        x: date.getTime(),
+                        y: value
+                    });
+                }
+            }
+            
+            return { normal, anomalies };
+        }
+
+        function generateAccuracyData() {
+            const labels = [];
+            const accuracy = [];
+            
+            for (let i = 0; i < 12; i++) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - 12 + i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short' }));
+                accuracy.push(85 + Math.random() * 10);
+            }
+            
+            return { labels, accuracy };
+        }
+
+        function generateScenarioData() {
+            const labels = [];
+            const base = [];
+            const scenario = [];
+            
+            for (let i = 0; i < 12; i++) {
+                const date = new Date();
+                date.setMonth(date.getMonth() + i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+                
+                const baseValue = 3000 + (i * 100) + (Math.random() - 0.5) * 200;
+                const scenarioValue = baseValue * (1 + (Math.random() - 0.3) * 0.3); // Some scenario variation
+                
+                base.push(Math.round(baseValue));
+                scenario.push(Math.round(scenarioValue));
+            }
+            
+            return { labels, base, scenario };
+        }
+    </script>
+</body>
+</html>
