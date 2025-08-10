@@ -1,0 +1,813 @@
+{% extends "base.html" %}
+
+{% block title %}Data Management - Sales Forecasting Platform{% endblock %}
+{% block page_title %}Data Management{% endblock %}
+
+{% block content %}
+<!-- File Upload Section -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Upload Sales Data</h3>
+        <button onclick="loadSampleData()" class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+            Use Sample Data
+        </button>
+    </div>
+    
+    <!-- Drag and Drop Zone -->
+    <div id="drop-zone" class="file-upload-area mb-6">
+        <div class="text-center">
+            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+            <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                Drop your files here, or <span class="text-primary-600 dark:text-primary-400">browse</span>
+            </h4>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Supports CSV, Excel (.xlsx, .xls), and JSON files up to 10MB
+            </p>
+            <div class="flex justify-center space-x-4 text-xs text-gray-400">
+                <span class="flex items-center"><i class="fas fa-file-csv mr-1"></i> CSV</span>
+                <span class="flex items-center"><i class="fas fa-file-excel mr-1"></i> Excel</span>
+                <span class="flex items-center"><i class="fas fa-file-code mr-1"></i> JSON</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Progress -->
+    <div id="upload-progress" class="hidden mb-6">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Uploading...</span>
+            <span id="progress-percentage" class="text-sm text-gray-500 dark:text-gray-400">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div id="progress-bar" class="bg-primary-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <!-- Upload Status -->
+    <div id="upload-status" class="hidden"></div>
+</div>
+
+<!-- Data Preview Section -->
+<div id="data-preview-section" class="hidden mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Data Preview</h3>
+            <div class="flex space-x-2">
+                <button onclick="validateData()" class="btn-primary px-4 py-2">
+                    <i class="fas fa-check-circle mr-2"></i>Validate
+                </button>
+                <button onclick="cleanData()" class="btn-secondary px-4 py-2">
+                    <i class="fas fa-broom mr-2"></i>Clean
+                </button>
+            </div>
+        </div>
+        
+        <!-- Data Information -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Records</div>
+                <div id="total-records" class="text-2xl font-bold text-gray-900 dark:text-white">-</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-600 dark:text-gray-400">Date Range</div>
+                <div id="date-range" class="text-sm font-semibold text-gray-900 dark:text-white">-</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-600 dark:text-gray-400">Missing Values</div>
+                <div id="missing-values" class="text-2xl font-bold text-gray-900 dark:text-white">-</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-600 dark:text-gray-400">Data Quality</div>
+                <div id="data-quality" class="text-sm font-semibold">
+                    <span class="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded">Pending</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Table -->
+        <div class="overflow-x-auto">
+            <table id="data-table" class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th class="px-6 py-3">Date</th>
+                        <th class="px-6 py-3">Sales</th>
+                        <th class="px-6 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table-body">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-6">
+            <div class="text-sm text-gray-700 dark:text-gray-300">
+                Showing <span id="showing-start">1</span> to <span id="showing-end">10</span> of <span id="total-rows">0</span> entries
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="previousPage()" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700">
+                    Previous
+                </button>
+                <button onclick="nextPage()" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Validation Results -->
+<div id="validation-results" class="hidden mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Validation Results</h3>
+        
+        <div id="validation-content">
+            <!-- Validation results will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Data Processing Options -->
+<div id="processing-options" class="hidden mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Data Cleaning -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Data Cleaning</h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white">Handle Missing Values</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Forward fill, backward fill, or interpolate</p>
+                    </div>
+                    <select id="missing-value-method" class="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1">
+                        <option value="ffill">Forward Fill</option>
+                        <option value="bfill">Backward Fill</option>
+                        <option value="interpolate">Interpolate</option>
+                        <option value="remove">Remove Rows</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white">Remove Duplicates</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Remove duplicate date entries</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="remove-duplicates" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white">Outlier Detection</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Identify and handle outliers</p>
+                    </div>
+                    <button onclick="detectOutliers()" class="px-4 py-2 bg-warning-600 text-white text-sm font-medium rounded-md hover:bg-warning-700">
+                        Detect
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Statistics -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Data Statistics</h3>
+            
+            <div id="data-statistics" class="space-y-4">
+                <!-- Statistics will be populated here -->
+            </div>
+            
+            <button onclick="refreshStatistics()" class="w-full mt-6 btn-secondary">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh Statistics
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Data Visualization -->
+<div id="data-visualization" class="hidden mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Data Visualization</h3>
+            <div class="flex space-x-2">
+                <button onclick="changeChartType('line')" class="chart-type-btn active px-3 py-1 text-sm font-medium rounded-md">Line</button>
+                <button onclick="changeChartType('bar')" class="chart-type-btn px-3 py-1 text-sm font-medium rounded-md">Bar</button>
+                <button onclick="changeChartType('scatter')" class="chart-type-btn px-3 py-1 text-sm font-medium rounded-md">Scatter</button>
+            </div>
+        </div>
+        
+        <div class="relative h-96">
+            <canvas id="data-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div id="export-options" class="hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Export Data</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button onclick="exportData('csv')" class="flex items-center justify-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+                <div class="text-center">
+                    <i class="fas fa-file-csv text-2xl text-green-600 mb-2"></i>
+                    <p class="font-medium text-gray-900 dark:text-white">Export as CSV</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Comma-separated values</p>
+                </div>
+            </button>
+            
+            <button onclick="exportData('excel')" class="flex items-center justify-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+                <div class="text-center">
+                    <i class="fas fa-file-excel text-2xl text-green-700 mb-2"></i>
+                    <p class="font-medium text-gray-900 dark:text-white">Export as Excel</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Microsoft Excel format</p>
+                </div>
+            </button>
+            
+            <button onclick="exportData('json')" class="flex items-center justify-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+                <div class="text-center">
+                    <i class="fas fa-file-code text-2xl text-blue-600 mb-2"></i>
+                    <p class="font-medium text-gray-900 dark:text-white">Export as JSON</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">JavaScript Object Notation</p>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/data-upload.js') }}"></script>
+<script>
+// Data management page specific JavaScript
+let uploadedData = null;
+let currentPage = 1;
+let rowsPerPage = 10;
+let dataChart = null;
+let fileUploadHandler = null;
+
+// Initialize data management page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDataManagement();
+});
+
+function initializeDataManagement() {
+    // Initialize file upload handler
+    fileUploadHandler = new FileUploadHandler('#drop-zone', {
+        maxFileSize: 10 * 1024 * 1024, // 10MB
+        allowedTypes: ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/json'],
+        multiple: false
+    });
+    
+    // Listen for file selection
+    eventBus.on('filesSelected', handleFileSelection);
+    
+    // Setup event listeners
+    setupEventListeners();
+}
+
+function setupEventListeners() {
+    // Chart type buttons
+    document.querySelectorAll('.chart-type-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const chartType = this.textContent.toLowerCase();
+            changeChartType(chartType);
+        });
+    });
+}
+
+function handleFileSelection(files) {
+    if (files.length > 0) {
+        uploadFile(files[0]);
+    }
+}
+
+async function uploadFile(file) {
+    try {
+        // Show upload progress
+        document.getElementById('upload-progress').classList.remove('hidden');
+        
+        // Simulate upload progress
+        simulateUploadProgress();
+        
+        // Upload file
+        const response = await api.uploadFile('/data/upload', file);
+        
+        if (response.success) {
+            displayUploadSuccess(response);
+            displayDataPreview(response);
+            showToast('File uploaded successfully!', 'success');
+        } else {
+            throw new Error(response.error);
+        }
+        
+    } catch (error) {
+        console.error('Upload failed:', error);
+        displayUploadError(error.message);
+        showToast('Upload failed: ' + error.message, 'error');
+    } finally {
+        // Hide upload progress
+        setTimeout(() => {
+            document.getElementById('upload-progress').classList.add('hidden');
+        }, 1000);
+    }
+}
+
+function simulateUploadProgress() {
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercentage = document.getElementById('progress-percentage');
+    let progress = 0;
+    
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 100) progress = 100;
+        
+        progressBar.style.width = progress + '%';
+        progressPercentage.textContent = Math.round(progress) + '%';
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+        }
+    }, 200);
+}
+
+function displayUploadSuccess(response) {
+    const statusDiv = document.getElementById('upload-status');
+    statusDiv.className = 'alert success';
+    statusDiv.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-3"></i>
+            <div>
+                <p class="font-medium">Upload successful!</p>
+                <p class="text-sm">File: ${response.filename}</p>
+            </div>
+        </div>
+    `;
+    statusDiv.classList.remove('hidden');
+    
+    // Store uploaded data info
+    uploadedData = response;
+}
+
+function displayUploadError(errorMessage) {
+    const statusDiv = document.getElementById('upload-status');
+    statusDiv.className = 'alert danger';
+    statusDiv.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-3"></i>
+            <div>
+                <p class="font-medium">Upload failed!</p>
+                <p class="text-sm">${errorMessage}</p>
+            </div>
+        </div>
+    `;
+    statusDiv.classList.remove('hidden');
+}
+
+async function displayDataPreview(response) {
+    try {
+        // Show data preview section
+        document.getElementById('data-preview-section').classList.remove('hidden');
+        document.getElementById('processing-options').classList.remove('hidden');
+        document.getElementById('data-visualization').classList.remove('hidden');
+        document.getElementById('export-options').classList.remove('hidden');
+        
+        // Update data information
+        if (response.data_summary) {
+            updateDataInformation(response.data_summary);
+        }
+        
+        // Get data preview
+        const previewResponse = await api.post('/data/preview', {
+            filepath: response.filepath,
+            rows: 50
+        });
+        
+        if (previewResponse.success) {
+            displayDataTable(previewResponse.preview);
+            createDataVisualization(previewResponse.preview);
+        }
+        
+        // Get data statistics
+        await loadDataStatistics(response.filepath);
+        
+    } catch (error) {
+        console.error('Error displaying data preview:', error);
+        showToast('Error loading data preview', 'error');
+    }
+}
+
+function updateDataInformation(summary) {
+    document.getElementById('total-records').textContent = summary.shape ? summary.shape[0] : '-';
+    document.getElementById('date-range').textContent = summary.date_range ? 
+        `${summary.date_range.start} to ${summary.date_range.end}` : '-';
+    document.getElementById('missing-values').textContent = summary.missing_values || 0;
+    
+    // Update data quality indicator
+    const qualityEl = document.getElementById('data-quality');
+    const missingPercentage = summary.missing_values / summary.shape[0] * 100;
+    
+    if (missingPercentage < 5) {
+        qualityEl.innerHTML = '<span class="px-2 py-1 bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400 rounded">Good</span>';
+    } else if (missingPercentage < 15) {
+        qualityEl.innerHTML = '<span class="px-2 py-1 bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400 rounded">Fair</span>';
+    } else {
+        qualityEl.innerHTML = '<span class="px-2 py-1 bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400 rounded">Poor</span>';
+    }
+}
+
+function displayDataTable(preview) {
+    const tableBody = document.getElementById('data-table-body');
+    const data = preview.data;
+    
+    // Clear existing data
+    tableBody.innerHTML = '';
+    
+    // Populate table
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = Math.min(startIndex + rowsPerPage, data.length);
+    
+    for (let i = startIndex; i < endIndex; i++) {
+        const row = data[i];
+        const tr = document.createElement('tr');
+        tr.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
+        
+        // Determine row status
+        let status = 'Valid';
+        let statusClass = 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400';
+        
+        // Check for missing values or other issues
+        const salesValue = row[preview.columns.find(col => col.toLowerCase().includes('sales'))];
+        if (!salesValue || salesValue === null || salesValue === '') {
+            status = 'Missing';
+            statusClass = 'bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400';
+        }
+        
+        tr.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">${row[preview.columns[0]] || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${Utils.formatCurrency(salesValue) || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 text-xs font-medium rounded ${statusClass}">${status}</span>
+            </td>
+        `;
+        
+        tableBody.appendChild(tr);
+    }
+    
+    // Update pagination info
+    document.getElementById('showing-start').textContent = startIndex + 1;
+    document.getElementById('showing-end').textContent = endIndex;
+    document.getElementById('total-rows').textContent = data.length;
+}
+
+function createDataVisualization(preview) {
+    const ctx = document.getElementById('data-chart').getContext('2d');
+    
+    if (dataChart) {
+        dataChart.destroy();
+    }
+    
+    // Prepare chart data
+    const data = preview.data;
+    const dateColumn = preview.columns[0];
+    const salesColumn = preview.columns.find(col => col.toLowerCase().includes('sales'));
+    
+    const chartData = {
+        labels: data.map(row => {
+            const date = new Date(row[dateColumn]);
+            return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        }),
+        datasets: [{
+            label: 'Sales',
+            data: data.map(row => row[salesColumn]),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    };
+    
+    dataChart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            ...ChartUtils.getDefaultOptions(document.documentElement.classList.contains('dark')),
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadDataStatistics(filepath) {
+    try {
+        const response = await api.post('/data/statistics', { filepath });
+        
+        if (response.success) {
+            displayDataStatistics(response.statistics);
+        }
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+    }
+}
+
+function displayDataStatistics(stats) {
+    const statisticsDiv = document.getElementById('data-statistics');
+    
+    statisticsDiv.innerHTML = `
+        <div class="grid grid-cols-2 gap-4">
+            <div class="flex justify-between">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Mean</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">${Utils.formatCurrency(stats.basic_stats.mean)}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Median</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">${Utils.formatCurrency(stats.basic_stats.median)}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Std Dev</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">${Utils.formatCurrency(stats.basic_stats.std)}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Range</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">${Utils.formatCurrency(stats.basic_stats.min)} - ${Utils.formatCurrency(stats.basic_stats.max)}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Skewness</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">${stats.distribution_stats.skewness.toFixed(2)}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Kurtosis</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">${stats.distribution_stats.kurtosis.toFixed(2)}</span>
+            </div>
+        </div>
+    `;
+}
+
+async function validateData() {
+    if (!uploadedData) {
+        showToast('No data to validate', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await api.post('/data/validate', {
+            filepath: uploadedData.filepath
+        });
+        
+        if (response.success) {
+            displayValidationResults(response.validation);
+            showToast('Data validation completed', 'success');
+        }
+    } catch (error) {
+        console.error('Validation error:', error);
+        showToast('Validation failed: ' + error.message, 'error');
+    }
+}
+
+function displayValidationResults(validation) {
+    const resultsDiv = document.getElementById('validation-results');
+    const contentDiv = document.getElementById('validation-content');
+    
+    let html = '';
+    
+    if (validation.is_valid) {
+        html += `
+            <div class="alert success mb-4">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-3"></i>
+                    <span class="font-medium">Data validation passed!</span>
+                </div>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="alert danger mb-4">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-3"></i>
+                    <span class="font-medium">Data validation failed</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Display errors
+    if (validation.errors && validation.errors.length > 0) {
+        html += `
+            <div class="mb-4">
+                <h4 class="font-medium text-red-800 dark:text-red-200 mb-2">Errors:</h4>
+                <ul class="list-disc list-inside space-y-1">
+                    ${validation.errors.map(error => `<li class="text-red-700 dark:text-red-300">${error}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    // Display warnings
+    if (validation.warnings && validation.warnings.length > 0) {
+        html += `
+            <div class="mb-4">
+                <h4 class="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Warnings:</h4>
+                <ul class="list-disc list-inside space-y-1">
+                    ${validation.warnings.map(warning => `<li class="text-yellow-700 dark:text-yellow-300">${warning}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    contentDiv.innerHTML = html;
+    resultsDiv.classList.remove('hidden');
+}
+
+async function cleanData() {
+    if (!uploadedData) {
+        showToast('No data to clean', 'warning');
+        return;
+    }
+    
+    try {
+        const options = {
+            missing_value_method: document.getElementById('missing-value-method').value,
+            remove_duplicates: document.getElementById('remove-duplicates').checked
+        };
+        
+        const response = await api.post('/data/clean', {
+            filepath: uploadedData.filepath,
+            options: options
+        });
+        
+        if (response.success) {
+            showToast('Data cleaned successfully', 'success');
+            // Update the current data reference
+            uploadedData.filepath = response.cleaned_filepath;
+            // Refresh the preview
+            const previewResponse = await api.post('/data/preview', {
+                filepath: response.cleaned_filepath
+            });
+            if (previewResponse.success) {
+                displayDataTable(previewResponse.preview);
+                updateDataInformation(response.data_summary);
+            }
+        }
+    } catch (error) {
+        console.error('Cleaning error:', error);
+        showToast('Data cleaning failed: ' + error.message, 'error');
+    }
+}
+
+async function detectOutliers() {
+    if (!uploadedData) {
+        showToast('No data to analyze', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await api.post('/data/detect-outliers', {
+            filepath: uploadedData.filepath,
+            methods: ['comprehensive']
+        });
+        
+        if (response.success) {
+            displayOutlierResults(response);
+            showToast(`Detected ${response.outlier_summary.outlier_methods.comprehensive?.count || 0} outliers`, 'info');
+        }
+    } catch (error) {
+        console.error('Outlier detection error:', error);
+        showToast('Outlier detection failed: ' + error.message, 'error');
+    }
+}
+
+function displayOutlierResults(data) {
+    // This would display outlier detection results
+    // For now, just show a toast
+    const outlierCount = data.outlier_summary.outlier_methods.comprehensive?.count || 0;
+    showToast(`Found ${outlierCount} potential outliers`, 'info');
+}
+
+async function loadSampleData() {
+    try {
+        const response = await api.get('/data/sample');
+        
+        if (response.success) {
+            // Simulate file upload with sample data
+            uploadedData = {
+                filename: 'sample_data.csv',
+                filepath: 'data/sample/sample_data.csv'
+            };
+            
+            displayUploadSuccess({
+                filename: 'sample_data.csv'
+            });
+            
+            displayDataPreview({
+                data_summary: response.data_summary
+            });
+            
+            // Create preview from sample data
+            const preview = {
+                data: response.sample_data,
+                columns: Object.keys(response.sample_data[0] || {})
+            };
+            
+            displayDataTable(preview);
+            createDataVisualization(preview);
+            
+            showToast('Sample data loaded successfully!', 'success');
+        }
+    } catch (error) {
+        console.error('Error loading sample data:', error);
+        showToast('Failed to load sample data', 'error');
+    }
+}
+
+function changeChartType(type) {
+    // Update active button
+    document.querySelectorAll('.chart-type-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-primary-100', 'text-primary-600', 'dark:bg-primary-900/30', 'dark:text-primary-400');
+        btn.classList.add('text-gray-500', 'hover:text-primary-600');
+    });
+    
+    event.target.classList.remove('text-gray-500', 'hover:text-primary-600');
+    event.target.classList.add('active', 'bg-primary-100', 'text-primary-600', 'dark:bg-primary-900/30', 'dark:text-primary-400');
+    
+    // Update chart type
+    if (dataChart) {
+        dataChart.config.type = type;
+        dataChart.update();
+    }
+}
+
+async function exportData(format) {
+    if (!uploadedData) {
+        showToast('No data to export', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await api.post('/data/export', {
+            filepath: uploadedData.filepath,
+            format: format
+        });
+        
+        if (response.success) {
+            showToast(`Data exported as ${format.toUpperCase()}`, 'success');
+            // In a real implementation, this would trigger a download
+        }
+    } catch (error) {
+        console.error('Export error:', error);
+        showToast('Export failed: ' + error.message, 'error');
+    }
+}
+
+function refreshStatistics() {
+    if (uploadedData) {
+        loadDataStatistics(uploadedData.filepath);
+        showToast('Statistics refreshed', 'success');
+    }
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        if (uploadedData) {
+            // Refresh table display
+            const previewResponse = api.post('/data/preview', {
+                filepath: uploadedData.filepath
+            }).then(response => {
+                if (response.success) {
+                    displayDataTable(response.preview);
+                }
+            });
+        }
+    }
+}
+
+function nextPage() {
+    const totalRows = parseInt(document.getElementById('total-rows').textContent);
+    const maxPages = Math.ceil(totalRows / rowsPerPage);
+    
+    if (currentPage < maxPages) {
+        currentPage++;
+        if (uploadedData) {
+            // Refresh table display
+            const previewResponse = api.post('/data/preview', {
+                filepath: uploadedData.filepath
+            }).then(response => {
+                if (response.success) {
+                    displayDataTable(response.preview);
+                }
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
