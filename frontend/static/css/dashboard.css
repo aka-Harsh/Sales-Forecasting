@@ -1,0 +1,386 @@
+/* Dashboard-specific styles */
+
+/* KPI Cards */
+.kpi-card {
+    @apply bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1;
+}
+
+.kpi-value {
+    @apply text-3xl font-bold text-gray-900 dark:text-white mb-2;
+}
+
+.kpi-label {
+    @apply text-sm font-medium text-gray-600 dark:text-gray-400;
+}
+
+.kpi-change {
+    @apply text-sm font-medium flex items-center mt-2;
+}
+
+.kpi-change.positive {
+    @apply text-green-600 dark:text-green-400;
+}
+
+.kpi-change.negative {
+    @apply text-red-600 dark:text-red-400;
+}
+
+.kpi-change.neutral {
+    @apply text-gray-500 dark:text-gray-400;
+}
+
+.kpi-icon {
+    @apply p-3 rounded-lg;
+}
+
+.kpi-icon.primary {
+    @apply bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400;
+}
+
+.kpi-icon.success {
+    @apply bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400;
+}
+
+.kpi-icon.warning {
+    @apply bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400;
+}
+
+.kpi-icon.info {
+    @apply bg-info-100 dark:bg-info-900/30 text-info-600 dark:text-info-400;
+}
+
+/* Chart Containers */
+.chart-container {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6;
+}
+
+.chart-header {
+    @apply flex items-center justify-between mb-6;
+}
+
+.chart-title {
+    @apply text-lg font-semibold text-gray-900 dark:text-white;
+}
+
+.chart-controls {
+    @apply flex space-x-2;
+}
+
+.chart-control-btn {
+    @apply px-3 py-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+}
+
+.chart-control-btn.active {
+    @apply text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30;
+}
+
+/* Time Range Buttons */
+.time-range-btn {
+    @apply px-3 py-1 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer;
+}
+
+.time-range-btn.active {
+    @apply text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30;
+}
+
+/* Model Performance Bars */
+.model-performance {
+    @apply space-y-4;
+}
+
+.model-performance-item {
+    @apply flex items-center justify-between;
+}
+
+.model-name {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+.performance-bar-container {
+    @apply flex items-center space-x-2;
+}
+
+.performance-bar {
+    @apply w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2;
+}
+
+.performance-fill {
+    @apply h-2 rounded-full transition-all duration-500;
+}
+
+.performance-fill.excellent {
+    @apply bg-gradient-to-r from-green-400 to-green-600;
+}
+
+.performance-fill.good {
+    @apply bg-gradient-to-r from-blue-400 to-blue-600;
+}
+
+.performance-fill.fair {
+    @apply bg-gradient-to-r from-yellow-400 to-yellow-600;
+}
+
+.performance-fill.poor {
+    @apply bg-gradient-to-r from-red-400 to-red-600;
+}
+
+.performance-value {
+    @apply text-sm text-gray-500 dark:text-gray-400 w-10;
+}
+
+/* Insights List */
+.insights-list {
+    @apply space-y-4;
+}
+
+.insight-item {
+    @apply flex items-start space-x-3;
+}
+
+.insight-indicator {
+    @apply flex-shrink-0 w-2 h-2 rounded-full mt-2;
+}
+
+.insight-indicator.success {
+    @apply bg-success-500;
+}
+
+.insight-indicator.warning {
+    @apply bg-warning-500;
+}
+
+.insight-indicator.info {
+    @apply bg-primary-500;
+}
+
+.insight-indicator.danger {
+    @apply bg-danger-500;
+}
+
+.insight-content {
+    @apply flex-1;
+}
+
+.insight-title {
+    @apply text-sm font-medium text-gray-900 dark:text-white;
+}
+
+.insight-description {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+}
+
+/* Quick Actions */
+.quick-actions-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+.quick-action-card {
+    @apply p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 cursor-pointer;
+}
+
+.quick-action-card.primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white;
+}
+
+.quick-action-card.success {
+    @apply bg-gradient-to-r from-success-500 to-success-600 hover:from-success-600 hover:to-success-700 text-white;
+}
+
+.quick-action-card.purple {
+    @apply bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white;
+}
+
+.quick-action-card.orange {
+    @apply bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white;
+}
+
+.quick-action-icon {
+    @apply flex items-center justify-center mb-3;
+}
+
+.quick-action-title {
+    @apply font-semibold mb-2;
+}
+
+.quick-action-description {
+    @apply text-sm opacity-90;
+}
+
+/* Dashboard Animations */
+@keyframes dashboardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes counterUp {
+    from {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes progressFill {
+    from {
+        width: 0%;
+    }
+}
+
+.dashboard-fade-in {
+    animation: dashboardFadeIn 0.6s ease-out;
+}
+
+.counter-up {
+    animation: counterUp 0.8s ease-out;
+}
+
+.progress-animate {
+    animation: progressFill 1.5s ease-out;
+}
+
+/* Responsive Dashboard */
+@media (max-width: 768px) {
+    .kpi-card {
+        @apply p-4;
+    }
+    
+    .kpi-value {
+        @apply text-2xl;
+    }
+    
+    .chart-container {
+        @apply p-4;
+    }
+    
+    .chart-header {
+        @apply flex-col items-start space-y-4;
+    }
+    
+    .chart-controls {
+        @apply w-full justify-center;
+    }
+}
+
+@media (max-width: 640px) {
+    .quick-actions-grid {
+        @apply grid-cols-1 gap-4;
+    }
+    
+    .quick-action-card {
+        @apply p-4;
+    }
+    
+    .model-performance-item {
+        @apply flex-col items-start space-y-2;
+    }
+    
+    .performance-bar-container {
+        @apply w-full justify-between;
+    }
+    
+    .performance-bar {
+        @apply flex-1 mr-2;
+    }
+}
+
+/* Chart Loading States */
+.chart-loading {
+    @apply flex items-center justify-center h-64 text-gray-400;
+}
+
+.chart-loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mr-3;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    @apply grid gap-6 mb-8;
+}
+
+.dashboard-grid.kpi {
+    @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-4;
+}
+
+.dashboard-grid.charts {
+    @apply grid-cols-1 lg:grid-cols-2;
+}
+
+.dashboard-grid.analytics {
+    @apply grid-cols-1 lg:grid-cols-3;
+}
+
+/* Trend Indicators */
+.trend-indicator {
+    @apply inline-flex items-center text-xs font-medium px-2 py-1 rounded-full;
+}
+
+.trend-indicator.up {
+    @apply bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400;
+}
+
+.trend-indicator.down {
+    @apply bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-400;
+}
+
+.trend-indicator.stable {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300;
+}
+
+/* Status Indicators */
+.status-indicator {
+    @apply w-3 h-3 rounded-full;
+}
+
+.status-indicator.online {
+    @apply bg-success-500 animate-pulse;
+}
+
+.status-indicator.offline {
+    @apply bg-gray-400;
+}
+
+.status-indicator.warning {
+    @apply bg-warning-500 animate-pulse;
+}
+
+.status-indicator.error {
+    @apply bg-danger-500 animate-pulse;
+}
+
+/* Dashboard Tooltips */
+.dashboard-tooltip {
+    @apply absolute z-10 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg opacity-0 transition-opacity duration-200;
+}
+
+.dashboard-tooltip.show {
+    @apply opacity-100;
+}
+
+/* Print Styles for Dashboard */
+@media print {
+    .dashboard-grid {
+        @apply gap-4;
+    }
+    
+    .chart-container {
+        @apply shadow-none border border-gray-300;
+        break-inside: avoid;
+    }
+    
+    .quick-actions-grid {
+        @apply hidden;
+    }
+    
+    .chart-controls {
+        @apply hidden;
+    }
+}
